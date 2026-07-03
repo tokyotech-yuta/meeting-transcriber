@@ -77,6 +77,21 @@ uv run python -m app.transcriber path/to/audio.wav large-v3
 
 なお、漫才やバラエティ音声を題材にした実機検証では、Kotoba Whisper系（`v1.0-faster` と `v2.0-faster`）で音声の前半数十秒で文字起こしが停止する事象を確認しました。途中停止に遭遇した場合は `large-v3` への切り替えを試してください。
 
+## フォルダ監視モード（非エンジニア向け）
+
+Docker Composeの`watcher`サービスを起動すると、`data/inbox/` に音声ファイルまたは文字起こしテキストを置くだけで自動的に処理されます。
+
+```bash
+docker compose up -d watcher
+```
+
+- 音声ファイル（.wav / .mp3 / .m4a / .flac / .ogg）→ 文字起こしと議事録を生成
+- テキストファイル（.txt / .md）→ 議事録のみ生成
+- 結果と元ファイルは `data/inbox/完了/` に移動します
+- 失敗した場合は `data/inbox/エラー/` に原因メモとともに移動します
+
+監視対象をWindows共有フォルダ等に変更する場合は、`docker-compose.yml` の `watcher` サービスのボリューム設定を差し替えてください。
+
 ## RAG機能
 
 `data/knowledge/` ディレクトリにMarkdownファイルを置くと、議事録生成のプロンプトに関連知識が自動的に追加されます。埋め込みは初回計算時に `.rag_cache/` にキャッシュされ、2回目以降の起動を高速化します。

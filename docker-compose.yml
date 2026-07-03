@@ -1,0 +1,42 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama-models:/root/.ollama
+
+  app:
+    build: .
+    stdin_open: true
+    tty: true
+    environment:
+      # ollama クライアントは OLLAMA_HOST 環境変数で接続先を切り替える
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ./data:/app/data
+      - ./.rag_cache:/app/.rag_cache
+      - whisper-cache:/root/.cache
+    depends_on:
+      - ollama
+
+  # フォルダ監視サービス: data/inbox に音声/テキストを置くと自動で議事録を生成する
+  watcher:
+    build: .
+    command: ["uv", "run", "--no-sync", "python", "-m", "app.watcher"]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - WATCH_DIR=data/inbox
+      - WHISPER_MODEL=medium
+      - POLL_INTERVAL=5
+    volumes:
+      - ./data:/app/data
+      # 共有したい Windows フォルダを監視する場合は下行のように差し替える
+      # - /mnt/c/Users/Public/MeetingInbox:/app/data/inbox
+      - ./.rag_cache:/app/.rag_cache
+      - whisper-cache:/root/.cache
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+volumes:
+  ollama-models:
+  whisper-cache:

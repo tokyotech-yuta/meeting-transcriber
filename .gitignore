@@ -40,6 +40,10 @@ data/transcripts/*.md
 !data/audio/.gitkeep
 !data/transcripts/.gitkeep
 
+# フォルダ監視の受け口（中身は会議データのため除外）
+data/inbox/*
+!data/inbox/.gitkeep
+
 # RAGキャッシュ（自動生成されるため除外）
 .rag_cache/
 
