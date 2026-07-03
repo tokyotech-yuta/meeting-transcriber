@@ -7,6 +7,7 @@ import ollama
 from tqdm import tqdm
 
 from app.logger import setup_logger
+from app.ollama_utils import is_model_available, list_model_names
 from app.rag import KnowledgeBase
 
 logger = setup_logger(__name__)
@@ -79,14 +80,13 @@ class MinutesGenerator:
 
         # Ollamaの接続確認
         try:
-            models = ollama.list()
-            available_models = [m["name"] for m in models.get("models", [])]
+            available_models = list_model_names()
 
             if not available_models:
                 logger.warning("⚠️  Ollamaモデルが見つかりません")
                 logger.info("   以下のコマンドでモデルをダウンロードしてください：")
                 logger.info(f"   ollama pull {model}")
-            elif model not in available_models:
+            elif not is_model_available(model, available_models):
                 logger.warning(f"⚠️  モデル '{model}' が見つかりません")
                 logger.info(f"   利用可能なモデル: {', '.join(available_models)}")
                 logger.info("   以下のコマンドでダウンロード：")

@@ -9,6 +9,7 @@ import numpy as np
 import ollama
 
 from app.logger import setup_logger
+from app.ollama_utils import is_model_available, list_model_names
 
 logger = setup_logger(__name__)
 
@@ -48,10 +49,9 @@ class KnowledgeBase:
     def _check_embed_model(self) -> None:
         """埋め込みモデルの存在確認"""
         try:
-            models = ollama.list()
-            available_models = [m["name"] for m in models.get("models", [])]
+            available_models = list_model_names()
 
-            if self.embed_model not in available_models:
+            if not is_model_available(self.embed_model, available_models):
                 logger.warning(f"⚠️  埋め込みモデル '{self.embed_model}' が見つかりません")
                 logger.info("   以下のコマンドでダウンロード：")
                 logger.info(f"   ollama pull {self.embed_model}")
