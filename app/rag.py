@@ -249,8 +249,9 @@ class KnowledgeBase:
         if not self.knowledge_chunks:
             return ""
 
-        # クエリの埋め込みを取得
-        query_embedding = self._get_embedding(query)
+        # 埋め込みモデルの入力上限（512トークン）を超えないようクエリを切り詰める。
+        # 日本語はほぼ1文字1トークンのため500字とする（ナレッジ側のチャンクサイズと同じ）
+        query_embedding = self._get_embedding(query[:500])
         if not query_embedding:
             return ""
 

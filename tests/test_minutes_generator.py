@@ -64,6 +64,9 @@ def test_generate_success() -> None:
 
             assert "議事録" in minutes
             mock_chat.assert_called_once()
+            # 長時間会議の切り捨て防止: コンテキスト長が明示されていること
+            options = mock_chat.call_args.kwargs["options"]
+            assert options["num_ctx"] == 32768
 
 
 def test_generate_with_title() -> None:

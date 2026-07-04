@@ -198,6 +198,24 @@ def test_search(
             # 類似度が高いチャンクが返されるはず
 
 
+def test_search_truncates_long_query(
+    temp_knowledge_dir: Path, temp_cache_dir: Path, sample_knowledge_file: Path
+) -> None:
+    """長いクエリは埋め込みモデルの上限超過を避けるため切り詰められる"""
+    with patch("ollama.list") as mock_list:
+        mock_list.return_value = {"models": [{"name": "mxbai-embed-large"}]}
+
+        with patch("ollama.embeddings") as mock_embed:
+            mock_embed.return_value = {"embedding": [0.1, 0.2, 0.3]}
+
+            kb = KnowledgeBase(knowledge_dir=temp_knowledge_dir, cache_dir=temp_cache_dir)
+
+            kb.search("あ" * 50000)
+
+            query_prompt = mock_embed.call_args.kwargs["prompt"]
+            assert len(query_prompt) == 500
+
+
 def test_search_empty_knowledge(temp_knowledge_dir: Path, temp_cache_dir: Path) -> None:
     """空のナレッジベースでの検索テスト"""
     with patch("ollama.list") as mock_list:

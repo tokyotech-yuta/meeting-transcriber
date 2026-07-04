@@ -168,6 +168,9 @@ class MinutesGenerator:
                     options={
                         "temperature": 0.3,  # 創造性を抑えて正確性重視
                         "num_predict": 2048,  # 最大出力トークン数
+                        # 長時間会議の文字起こしが先頭から切り捨てられないよう
+                        # コンテキスト長を明示（Ollamaのデフォルトは4096で1〜2時間会議に不足）
+                        "num_ctx": 32768,
                     },
                 )
                 llm_pbar.update(100)
