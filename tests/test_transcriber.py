@@ -56,6 +56,19 @@ def test_transcriber_japanese_model_mapping() -> None:
         )
 
 
+def test_transcribe_progress_callback(sample_audio_file: Path, mock_whisper_model: Mock) -> None:
+    """progress_callbackに処理済み秒数と全体秒数が通知される"""
+    with patch("app.transcriber.WhisperModel", return_value=mock_whisper_model):
+        transcriber = Transcriber(model_name="small")
+
+        calls: list[tuple[float, float]] = []
+        transcriber.transcribe(
+            sample_audio_file, progress_callback=lambda done, total: calls.append((done, total))
+        )
+
+    assert calls == [(1.0, 1.0)]
+
+
 def test_transcribe_file_not_found() -> None:
     """transcribeメソッドのファイル未検出テスト"""
     with patch("app.transcriber.WhisperModel"):

@@ -22,6 +22,9 @@ dev = [
     "ruff>=0.14.7",
     "types-tqdm>=4.67.0.20250809",
 ]
+webui = [
+    "gradio>=5.0.0",
+]
 
 # Ruff設定
 [tool.ruff]
@@ -73,6 +76,7 @@ module = [
     "sounddevice.*",
     "soundfile.*",
     "faster_whisper.*",
+    "gradio.*",
 ]
 ignore_missing_imports = true
 

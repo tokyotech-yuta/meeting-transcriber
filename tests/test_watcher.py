@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from app.watcher import DONE_DIR_NAME, ERROR_DIR_NAME, FolderWatcher
+from app.watcher import DONE_DIR_NAME, ERROR_DIR_NAME, FolderWatcher, read_status
 
 
 @pytest.fixture
@@ -152,6 +152,57 @@ def test_ignores_hidden_and_unsupported_files(watcher: FolderWatcher, watch_dir:
     assert (watch_dir / ".hidden.wav").exists()
     assert (watch_dir / "~$temp.txt").exists()
     assert (watch_dir / "document.pdf").exists()
+
+
+def test_status_file_after_success(watcher: FolderWatcher, watch_dir: Path) -> None:
+    """処理成功後、ステータスファイルに直近の結果が記録される"""
+    watcher.minutes_gen = Mock()
+    (watch_dir / "meeting.txt").write_text("会議の内容", encoding="utf-8")
+
+    _scan_until_stable(watcher)
+
+    status = read_status(watch_dir)
+    assert status["current"] is None
+    assert status["last"]["file"] == "meeting.txt"
+    assert status["last"]["result"] == "完了"
+
+
+def test_status_file_after_error(watcher: FolderWatcher, watch_dir: Path) -> None:
+    """処理失敗後、ステータスファイルにエラーが記録される"""
+    (watch_dir / "meeting.txt").write_text("会議の内容", encoding="utf-8")
+
+    _scan_until_stable(watcher)
+
+    status = read_status(watch_dir)
+    assert status["current"] is None
+    assert status["last"]["result"] == "エラー"
+
+
+def test_progress_callback_updates_status(watcher: FolderWatcher, watch_dir: Path) -> None:
+    """進捗コールバックがステータスファイルに進捗を書き込む（連続呼び出しは間引く）"""
+    watcher._current = {"file": "a.wav", "stage": "文字起こし中", "started_at": "2026-07-04T10:00:00"}
+    callback = watcher._make_progress_callback()
+
+    callback(30.0, 120.0)
+    status = read_status(watch_dir)
+    assert status["current"]["progress"] == {"done_sec": 30.0, "total_sec": 120.0}
+
+    callback(60.0, 120.0)  # 10秒以内の連続呼び出しは書き込まれない
+    status = read_status(watch_dir)
+    assert status["current"]["progress"]["done_sec"] == 30.0
+
+
+def test_read_status_missing_file(watch_dir: Path) -> None:
+    """ステータスファイルが無い場合は空の状態を返す"""
+    status = read_status(watch_dir / "nonexistent")
+
+    assert status["current"] is None
+    assert status["last"] is None
+
+
+def test_status_file_not_processed_as_target(watcher: FolderWatcher, watch_dir: Path) -> None:
+    """ステータスファイル自体は処理対象にならない"""
+    assert _scan_until_stable(watcher) == 0  # 初期化時に書かれた .processing_status.json を無視
 
 
 def test_subdirectories_ignored(watcher: FolderWatcher, watch_dir: Path) -> None:

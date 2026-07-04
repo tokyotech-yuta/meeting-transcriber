@@ -37,6 +37,26 @@ services:
       - ollama
     restart: unless-stopped
 
+  # Web UI: ブラウザ（http://localhost:7860）から音声/テキストをアップロードして議事録を生成する
+  webui:
+    build: .
+    command: ["uv", "run", "--no-sync", "python", "-m", "app.webui"]
+    ports:
+      - "7860:7860"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - WHISPER_MODEL=medium
+      - WATCH_DIR=data/inbox
+      # LAN公開時に簡易認証を掛ける場合は user:password 形式で設定する
+      # - WEBUI_AUTH=team:changeme
+    volumes:
+      - ./data:/app/data
+      - ./.rag_cache:/app/.rag_cache
+      - whisper-cache:/root/.cache
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
 volumes:
   ollama-models:
   whisper-cache:

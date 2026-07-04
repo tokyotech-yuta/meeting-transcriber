@@ -43,6 +43,7 @@ uv run python -m app.transcriber path/to/audio.wav large-v3
 - `app/minutes_generator.py` — `MinutesGenerator`。Ollama chat（デフォルト `qwen2.5:7b`、temperature 0.3）で議事録を Markdown 生成。RAG 検索結果があればシステムプロンプトに「参考情報」として注入する。
 - `app/watcher.py` — `FolderWatcher`。監視フォルダ（デフォルト `data/inbox`、環境変数 `WATCH_DIR` で変更）に置かれた音声/テキストを自動処理する常駐サービス。ファイルサイズが2回のスキャンで一致してから処理する（コピー途中の誤処理防止）。結果は「完了」、失敗は「エラー」サブフォルダへ移動。docker-compose の `watcher` サービスとして起動（`docker compose up -d watcher`）。
 - `app/ollama_utils.py` — `ollama.list()` のレスポンス形式差異（ライブラリ 0.4 以降のオブジェクト形式 / 旧辞書形式）を吸収するヘルパー。モデル存在チェックはここを経由する。
+- `app/webui.py` — Gradio 製 Web UI（ポート 7860、`docker compose up -d webui`）。アップロード → 議事録生成に加え、フォルダ監視分の処理状況（watcher が監視フォルダに書く `.processing_status.json`）を進捗バー付きで表示する。gradio 依存は dependency-group `webui`（Dockerfile で `--group webui` 指定）。mypy は gradio を ignore_missing_imports 扱い。
 - `app/rag.py` — `KnowledgeBase`。`data/knowledge/*.md` を見出し単位＋500 文字でチャンク分割し、Ollama の `mxbai-embed-large` で埋め込み、コサイン類似度で top-k 検索。埋め込みは `.rag_cache/embeddings.json` にファイル内容の MD5 ハッシュをキーとしてキャッシュ（ファイル変更時のみ再計算）。
 - `app/logger.py` — 全モジュール共通の `setup_logger`。メッセージのみのシンプルフォーマット（絵文字でレベル表現）。`print` ではなく logger を使う。
 

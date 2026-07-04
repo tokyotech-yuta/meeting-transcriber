@@ -9,7 +9,7 @@ WORKDIR /app
 
 # 依存だけ先にインストールしてレイヤーキャッシュを効かせる
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --frozen --no-dev --no-install-project --group webui
 
 COPY app/ app/
 COPY main.py ./

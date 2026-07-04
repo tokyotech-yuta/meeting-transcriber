@@ -1,6 +1,7 @@
 """音声文字起こしモジュール（faster-whisper使用）"""
 
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 from faster_whisper import WhisperModel
@@ -72,6 +73,7 @@ class Transcriber:
         beam_size: int = 5,
         vad_filter: bool = True,
         vad_parameters: dict | None = None,
+        progress_callback: Callable[[float, float], None] | None = None,
     ) -> tuple[str, list[Segment]]:
         """
         音声ファイルを文字起こし
@@ -82,6 +84,8 @@ class Transcriber:
             beam_size: ビームサーチのサイズ（大きいほど精度向上、処理時間増）
             vad_filter: 音声区間検出を使用するか（無音部分をスキップ）
             vad_parameters: VADのパラメータ（詳細設定）
+            progress_callback: 進捗通知コールバック（処理済み秒数, 音声全体の秒数）。
+                音声の長さが取得できない場合は呼ばれない
 
         Returns:
             (全文テキスト, セグメントリスト)
@@ -136,6 +140,8 @@ class Transcriber:
                 # 進捗を更新
                 if duration:
                     pbar.update(int(seg.end) - pbar.n)
+                    if progress_callback is not None:
+                        progress_callback(float(seg.end), float(duration))
         finally:
             pbar.close()
 
